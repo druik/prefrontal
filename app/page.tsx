@@ -19,7 +19,17 @@ type Task = {
 type Tab = "today" | "backlog";
 
 function todayDate(): string {
-  return new Date().toISOString().split("T")[0];
+  return new Date().toLocaleDateString("en-CA", {
+    timeZone: "America/Los_Angeles",
+  });
+}
+
+function tomorrowDate(): string {
+  const d = new Date(
+    new Date().toLocaleString("en-US", { timeZone: "America/Los_Angeles" })
+  );
+  d.setDate(d.getDate() + 1);
+  return d.toISOString().split("T")[0];
 }
 
 function MoreMenu({
@@ -156,6 +166,15 @@ export default function Home() {
     fetchTasks();
   }
 
+  async function planForTomorrow(taskId: string) {
+    setTodayTasks((prev) => prev.filter((t) => t.id !== taskId));
+    await supabase
+      .from("tasks")
+      .update({ approved_date: tomorrowDate() })
+      .eq("id", taskId);
+    fetchTasks();
+  }
+
   async function addToToday(taskId: string) {
     await supabase
       .from("tasks")
@@ -241,6 +260,7 @@ export default function Home() {
                 <MoreMenu
                   actions={[
                     { label: "Remove", onClick: () => removeFromToday(task.id) },
+                    { label: "Plan for tomorrow", onClick: () => planForTomorrow(task.id) },
                     { label: "Delete", onClick: () => deleteTask(task.id) },
                   ]}
                 />
