@@ -1,36 +1,29 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Prefrontal
 
-## Getting Started
+A daily planning interface designed for brains that struggle with open-ended task lists. Prefrontal is the decision-making layer for [Cortex](https://cortex-display.vercel.app), a minimal ambient display that shows only what matters right now.
 
-First, run the development server:
+**Live:** [prefrontal-swart.vercel.app](https://prefrontal-swart.vercel.app)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## The Problem
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Traditional task managers present everything at once. For people managing ADHD or variable cognitive capacity, an unbounded list creates decision paralysis before the real work even starts. The question isn't "what needs to get done" — it's "what am I committing to today, given how I'm doing right now?"
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## How It Works
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Prefrontal splits task management into two deliberate steps:
 
-## Learn More
+1. **Backlog** — Capture tasks without pressure. Everything lands here first with no date, no priority, no urgency. Just a list of things that exist.
 
-To learn more about Next.js, take a look at the following resources:
+2. **Plan Today** — Each morning (or whenever you're ready), review the backlog and pull specific tasks into today's plan. This is the approval step — a conscious commitment to a short list.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Once approved, tasks appear on Cortex, a passive display that shows only today's commitments. Completing a task in either interface marks it done in both.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+The separation is the point. Capturing and planning are different cognitive modes. Prefrontal keeps them apart.
 
-## Deploy on Vercel
+## Tech Stack
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Next.js** with App Router
+- **Supabase** for auth (anonymous) and data
+- **TypeScript**
+- **Tailwind CSS**
+- **Vercel** for deployment

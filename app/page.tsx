@@ -17,6 +17,8 @@ type Task = {
 };
 
 type Tab = "today" | "backlog";
+type CapacityState = "low" | "moderate" | "high" | "rest";
+const CAPACITY_OPTIONS: CapacityState[] = ["low", "moderate", "high", "rest"];
 
 function todayDate(): string {
   return new Date().toLocaleDateString("en-CA", {
@@ -89,6 +91,7 @@ export default function Home() {
   const [backlogTasks, setBacklogTasks] = useState<Task[]>([]);
   const [newTitle, setNewTitle] = useState("");
   const [showCompleted, setShowCompleted] = useState(false);
+  const [capacity, setCapacity] = useState<CapacityState | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -111,7 +114,7 @@ export default function Home() {
     setLoading(true);
     const today = todayDate();
 
-    const [todayRes, completedRes, backlogRes] = await Promise.all([
+    const [todayRes, completedRes, backlogRes, capacityRes] = await Promise.all([
       supabase
         .from("tasks")
         .select("*")
@@ -133,8 +136,17 @@ export default function Home() {
         .is("approved_date", null)
         .eq("completed", false)
         .order("created_at", { ascending: true }),
+      supabase
+        .from("Capacity")
+        .select("state")
+        .eq("id", 1)
+        .single(),
     ]);
 
+    console.log("[Capacity] fetch response:", capacityRes);
+    if (capacityRes.data) {
+      setCapacity(capacityRes.data.state as CapacityState);
+    }
     setTodayTasks(todayRes.data ?? []);
     setCompletedTasks(completedRes.data ?? []);
     setBacklogTasks(backlogRes.data ?? []);
@@ -196,6 +208,16 @@ export default function Home() {
     fetchTasks();
   }
 
+  async function updateCapacity(state: CapacityState) {
+    console.log("[Capacity] setting:", state);
+    setCapacity(state);
+    const res = await supabase
+      .from("Capacity")
+      .update({ state, updated_at: new Date().toISOString() })
+      .eq("id", 1);
+    console.log("[Capacity] update response:", res);
+  }
+
   if (!userId) {
     return (
       <div className="flex-1 flex items-center justify-center text-muted">
@@ -210,6 +232,23 @@ export default function Home() {
         <h1 className="text-2xl font-light text-foreground mb-6">
           Prefrontal
         </h1>
+
+        <div className="flex gap-4 mb-6">
+          {CAPACITY_OPTIONS.map((opt) => (
+            <button
+              key={opt}
+              onClick={() => updateCapacity(opt)}
+              className={`text-sm capitalize min-h-[44px] px-1 border-b-2 ${
+                capacity === opt
+                  ? "text-foreground border-b-white/40"
+                  : "text-muted border-b-transparent"
+              }`}
+              style={{ transition: "color 150ms" }}
+            >
+              {opt}
+            </button>
+          ))}
+        </div>
 
         <div className="flex gap-6 border-b border-white/10 mb-6">
           <button
