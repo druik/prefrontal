@@ -175,7 +175,6 @@ export default function Home() {
         .single(),
     ]);
 
-    console.log("[Capacity] fetch response:", capacityRes);
     if (capacityRes.data) {
       setCapacity(capacityRes.data.state as CapacityState);
     }
@@ -249,14 +248,12 @@ export default function Home() {
   }
 
   async function updateCapacity(state: CapacityState) {
-    console.log("[Capacity] setting:", state);
     setCapacity(state);
     if (noop) return;
-    const res = await supabase
+    await supabase
       .from("Capacity")
       .update({ state, updated_at: new Date().toISOString() })
       .eq("id", 1);
-    console.log("[Capacity] update response:", res);
   }
 
   if (!userId) {
