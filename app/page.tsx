@@ -3,6 +3,8 @@
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+const DEMO_MODE = process.env.NEXT_PUBLIC_DEMO_MODE === "true";
+
 const supabase: SupabaseClient = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -19,6 +21,27 @@ type Task = {
 type Tab = "today" | "backlog";
 type CapacityState = "low" | "moderate" | "high" | "rest";
 const CAPACITY_OPTIONS: CapacityState[] = ["low", "moderate", "high", "rest"];
+
+const DEMO_TODAY: Task[] = [
+  { id: "d1", title: "Prep for 2pm department standup", completed: false, approved_date: "2024-01-01", created_at: "" },
+  { id: "d2", title: "Pick up Zoe from soccer at 5:30", completed: false, approved_date: "2024-01-01", created_at: "" },
+  { id: "d3", title: "Review vendor contract before Thursday", completed: false, approved_date: "2024-01-01", created_at: "" },
+];
+const DEMO_COMPLETED: Task[] = [
+  { id: "d4", title: "School permission slip signed and sent", completed: true, approved_date: "2024-01-01", created_at: "" },
+];
+const DEMO_BACKLOG: Task[] = [
+  { id: "d5", title: "Schedule pediatrician annual visit for Zoe", completed: false, approved_date: null, created_at: "" },
+  { id: "d6", title: "Submit expense report (deadline Friday)", completed: false, approved_date: null, created_at: "" },
+  { id: "d7", title: "Reply to Maya re: carpool schedule", completed: false, approved_date: null, created_at: "" },
+  { id: "d8", title: "Research meal prep for next week", completed: false, approved_date: null, created_at: "" },
+  { id: "d9", title: "Follow up with IT about VPN access", completed: false, approved_date: null, created_at: "" },
+  { id: "d10", title: "Book oil change", completed: false, approved_date: null, created_at: "" },
+  { id: "d11", title: "Read new EHR policy update", completed: false, approved_date: null, created_at: "" },
+  { id: "d12", title: "Call mom back", completed: false, approved_date: null, created_at: "" },
+  { id: "d13", title: "Order birthday gift for dad (ships in 5 days)", completed: false, approved_date: null, created_at: "" },
+  { id: "d14", title: "Draft agenda for Monday team meeting", completed: false, approved_date: null, created_at: "" },
+];
 
 function todayDate(): string {
   return new Date().toLocaleDateString("en-CA", {
@@ -95,6 +118,15 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (DEMO_MODE) {
+      setUserId("demo");
+      setTodayTasks(DEMO_TODAY);
+      setCompletedTasks(DEMO_COMPLETED);
+      setBacklogTasks(DEMO_BACKLOG);
+      setCapacity("moderate");
+      setLoading(false);
+      return;
+    }
     async function init() {
       const {
         data: { session },
@@ -110,7 +142,7 @@ export default function Home() {
   }, []);
 
   const fetchTasks = useCallback(async () => {
-    if (!userId) return;
+    if (!userId || DEMO_MODE) return;
     setLoading(true);
     const today = todayDate();
 
@@ -157,7 +189,10 @@ export default function Home() {
     fetchTasks();
   }, [fetchTasks]);
 
+  const noop = DEMO_MODE;
+
   async function toggleComplete(task: Task) {
+    if (noop) return;
     await supabase
       .from("tasks")
       .update({ completed: !task.completed })
@@ -166,19 +201,22 @@ export default function Home() {
   }
 
   async function removeFromToday(taskId: string) {
+    if (noop) return;
     await supabase
       .from("tasks")
-      .update({ approved_date: null })
+      .update({ approved_date: null, approved_at: null })
       .eq("id", taskId);
     fetchTasks();
   }
 
   async function deleteTask(taskId: string) {
+    if (noop) return;
     await supabase.from("tasks").delete().eq("id", taskId);
     fetchTasks();
   }
 
   async function planForTomorrow(taskId: string) {
+    if (noop) return;
     setTodayTasks((prev) => prev.filter((t) => t.id !== taskId));
     await supabase
       .from("tasks")
@@ -188,14 +226,16 @@ export default function Home() {
   }
 
   async function addToToday(taskId: string) {
+    if (noop) return;
     await supabase
       .from("tasks")
-      .update({ approved_date: todayDate() })
+      .update({ approved_date: todayDate(), approved_at: new Date().toISOString() })
       .eq("id", taskId);
     fetchTasks();
   }
 
   async function addTask() {
+    if (noop) return;
     const title = newTitle.trim();
     if (!title || !userId) return;
     setNewTitle("");
@@ -211,6 +251,7 @@ export default function Home() {
   async function updateCapacity(state: CapacityState) {
     console.log("[Capacity] setting:", state);
     setCapacity(state);
+    if (noop) return;
     const res = await supabase
       .from("Capacity")
       .update({ state, updated_at: new Date().toISOString() })
@@ -228,6 +269,11 @@ export default function Home() {
 
   return (
     <div className="flex-1 flex flex-col items-center px-4">
+      {DEMO_MODE && (
+        <div className="w-full max-w-[640px] mt-4 px-3 py-2 rounded-md bg-white/5 text-muted text-xs text-center">
+          You&#39;re viewing a demo. Sign in to use your own workspace.
+        </div>
+      )}
       <div className="w-full max-w-[640px] pt-12 pb-8">
         <h1 className="text-2xl font-light text-foreground mb-6">
           Prefrontal
