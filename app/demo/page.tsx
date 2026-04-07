@@ -1,11 +1,55 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+
+// --- Types ---
 
 interface DemoTask {
   id: string;
   title: string;
   created_at: string;
+}
+
+type CapacityState = "low" | "moderate" | "high" | "rest";
+
+const CAPACITY_OPTIONS: CapacityState[] = ["low", "moderate", "high", "rest"];
+
+const TASKS_BY_CAPACITY: Record<CapacityState, string[]> = {
+  rest: [],
+  low: ["Order new badge holder"],
+  moderate: ["Order new badge holder", "Text Snober re: onboarding call"],
+  high: [
+    "Order new badge holder",
+    "Text Snober re: onboarding call",
+    "Schedule Labcorp appointment",
+  ],
+};
+
+// --- Helpers ---
+
+function formatTime(date: Date): string {
+  return date.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+}
+
+function formatDate(date: Date): string {
+  return date.toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+  });
+}
+
+function formatCountdown(target: Date, now: Date): string {
+  const diff = Math.max(0, Math.floor((target.getTime() - now.getTime()) / 1000));
+  if (diff === 0) return "now";
+  const m = Math.floor(diff / 60);
+  const s = diff % 60;
+  if (m === 0) return `in ${s}s`;
+  return s > 0 ? `in ${m}m ${s}s` : `in ${m}m`;
 }
 
 function timeAgo(dateStr: string): string {
@@ -20,9 +64,20 @@ function timeAgo(dateStr: string): string {
   return `${hours}h ago`;
 }
 
+// --- Component ---
+
 export default function DemoPage() {
+  const [now, setNow] = useState<Date>(new Date());
+  const [capacity, setCapacity] = useState<CapacityState>("moderate");
+  const standupTime = useRef(new Date(Date.now() + 45 * 60 * 1000));
+
   const [tasks, setTasks] = useState<DemoTask[]>([]);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const interval = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   const fetchTasks = useCallback(async () => {
     const res = await fetch("/api/demo/tasks");
@@ -37,49 +92,142 @@ export default function DemoPage() {
     return () => clearInterval(interval);
   }, [fetchTasks]);
 
-  return (
-    <div className="flex-1 flex flex-col items-center px-4">
-      <div className="w-full max-w-[640px] pt-12 pb-8">
-        <h1 className="text-2xl font-light text-foreground mb-1">
-          Prefrontal
-        </h1>
-        <p className="text-sm text-muted mb-10">Live demo</p>
+  const fakeTasks = TASKS_BY_CAPACITY[capacity];
 
-        <div className="rounded-lg bg-surface px-4 py-3 mb-3">
-          <p className="text-xs text-muted leading-relaxed">
-            This is a shared demo. Don&#39;t type anything you wouldn&#39;t put
-            on a sticky note on your front door. Captures are automatically
-            deleted after 24 hours.
+  return (
+    <div className="flex flex-col items-center">
+      {/* Section 1: Cortex Display */}
+      <section className="w-full bg-black px-6 py-16 flex flex-col items-center">
+        <div className="w-full max-w-[640px]">
+          <p
+            className="font-light tracking-tight text-white leading-none mb-1"
+            style={{ fontSize: "8vw" }}
+          >
+            {formatTime(now)}
+          </p>
+          <p className="text-[2.5vw] text-[#6b7280] mb-10">
+            {formatDate(now)}
+          </p>
+
+          {/* Calendar event */}
+          <div className="pl-5 border-l-2 border-[#3b82f6]/40 mb-10">
+            <p className="text-[2.5vw] text-[#3b82f6]/80">
+              {formatTime(standupTime.current)}
+              <span className="text-white/50 mx-2">·</span>
+              Team Standup
+            </p>
+            <p className="text-[1.8vw] text-[#3b82f6]/50 mt-1 font-medium">
+              {formatCountdown(standupTime.current, now)}
+            </p>
+          </div>
+
+          {/* Capacity selector */}
+          <div className="flex gap-4 mb-10">
+            {CAPACITY_OPTIONS.map((opt) => (
+              <button
+                key={opt}
+                onClick={() => setCapacity(opt)}
+                className={`text-sm capitalize ${
+                  capacity === opt ? "text-white" : "text-[#6b7280]"
+                }`}
+              >
+                {opt}
+              </button>
+            ))}
+          </div>
+
+          {/* Tasks */}
+          {fakeTasks.length > 0 ? (
+            <ul className="space-y-4">
+              {fakeTasks.map((title) => (
+                <li
+                  key={title}
+                  className="text-[2.8vw] text-white/70"
+                >
+                  {title}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-[2.8vw] text-[#6b7280]">Rest</p>
+          )}
+        </div>
+      </section>
+
+      {/* Divider */}
+      <div className="w-full h-px bg-white/[0.06]" />
+
+      {/* Section 2: Bridge */}
+      <section className="w-full bg-[#111111] px-6 py-16 flex flex-col items-center">
+        <div className="w-full max-w-[640px] flex flex-col items-center">
+          <img
+            src="/demo-prefrontal.png"
+            alt="Prefrontal planning interface"
+            className="w-full max-w-[520px] rounded-lg mb-8"
+          />
+          <p className="text-sm text-[#9ca3af] text-center max-w-[520px] leading-relaxed">
+            Prefrontal is where you decide what&#39;s worth your attention
+            today. Tasks move from backlog to display with one tap.
           </p>
         </div>
-        <p className="text-[11px] text-muted/50 mb-10 px-1">
-          Limited to 5 captures per minute to keep things running smoothly.
-        </p>
+      </section>
 
-        {loading ? (
-          <p className="text-muted text-sm">Loading…</p>
-        ) : tasks.length === 0 ? (
-          <p className="text-muted text-sm">
-            No demo tasks yet. Use the iOS Shortcut to capture one.
+      {/* Divider */}
+      <div className="w-full h-px bg-white/[0.06]" />
+
+      {/* Section 3: Live capture feed */}
+      <section className="w-full bg-[#111111] px-6 py-16 flex flex-col items-center">
+        <div className="w-full max-w-[640px]">
+          <h2 className="text-xl font-light text-[#f5f5f5] mb-2">
+            Try it yourself
+          </h2>
+          <p className="text-sm text-[#9ca3af] mb-1">
+            <a
+              href="https://www.icloud.com/shortcuts/d381a06f254348e69d6cdfa19a8fce45"
+              className="text-[#60a5fa] hover:text-blue-300"
+            >
+              Add the Quick Capture shortcut
+            </a>
+            . Type anything. Watch it appear here.
           </p>
-        ) : (
-          <ul>
-            {tasks.map((task) => (
-              <li
-                key={task.id}
-                className="flex items-center justify-between min-h-[44px] gap-4 px-1"
-              >
-                <span className="text-[18px] text-foreground leading-snug">
-                  {task.title}
-                </span>
-                <span className="text-[11px] text-muted/50 shrink-0">
-                  {timeAgo(task.created_at)}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+          <p className="text-[11px] text-[#9ca3af]/50 mb-8">
+            Limited to 5 captures per minute to keep things running smoothly.
+          </p>
+
+          {loading ? (
+            <p className="text-[#9ca3af] text-sm">Loading…</p>
+          ) : tasks.length === 0 ? (
+            <p className="text-[#9ca3af] text-sm">
+              No captures yet. Be the first.
+            </p>
+          ) : (
+            <ul>
+              {tasks.map((task) => (
+                <li
+                  key={task.id}
+                  className="flex items-center justify-between min-h-[44px] gap-4 px-1"
+                >
+                  <span className="text-[18px] text-[#f5f5f5] leading-snug">
+                    {task.title}
+                  </span>
+                  <span className="text-[11px] text-[#9ca3af]/50 shrink-0">
+                    {timeAgo(task.created_at)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {/* Privacy notice */}
+          <div className="rounded-lg bg-[#1a1a1a] px-4 py-3 mt-10">
+            <p className="text-xs text-[#9ca3af] leading-relaxed">
+              This is a shared demo. Don&#39;t type anything you wouldn&#39;t
+              put on a sticky note on your front door. Captures are
+              automatically deleted after 24 hours.
+            </p>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }
