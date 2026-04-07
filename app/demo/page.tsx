@@ -40,17 +40,19 @@ export default function DemoPage() {
   return (
     <div className="flex-1 flex flex-col items-center px-4">
       <div className="w-full max-w-[640px] pt-12 pb-8">
-        <h1 className="text-2xl font-light text-foreground mb-2">
+        <h1 className="text-2xl font-light text-foreground mb-1">
           Prefrontal
         </h1>
-        <p className="text-sm text-muted mb-8">Live demo</p>
+        <p className="text-sm text-muted mb-10">Live demo</p>
 
-        <div className="rounded-md bg-white/5 px-4 py-3 mb-2 text-xs text-muted leading-relaxed">
-          This is a shared demo. Don&#39;t type anything you wouldn&#39;t put
-          on a sticky note on your front door. Captures are automatically
-          deleted after 24 hours.
+        <div className="rounded-lg bg-surface px-4 py-3 mb-3">
+          <p className="text-xs text-muted leading-relaxed">
+            This is a shared demo. Don&#39;t type anything you wouldn&#39;t put
+            on a sticky note on your front door. Captures are automatically
+            deleted after 24 hours.
+          </p>
         </div>
-        <p className="text-xs text-muted/60 mb-8">
+        <p className="text-[11px] text-muted/50 mb-10 px-1">
           Limited to 5 captures per minute to keep things running smoothly.
         </p>
 
@@ -65,12 +67,12 @@ export default function DemoPage() {
             {tasks.map((task) => (
               <li
                 key={task.id}
-                className="flex items-center justify-between min-h-[44px] gap-3"
+                className="flex items-center justify-between min-h-[44px] gap-4 px-1"
               >
                 <span className="text-[18px] text-foreground leading-snug">
                   {task.title}
                 </span>
-                <span className="text-xs text-muted shrink-0">
+                <span className="text-[11px] text-muted/50 shrink-0">
                   {timeAgo(task.created_at)}
                 </span>
               </li>
