@@ -4,6 +4,7 @@ import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 const DEMO_MODE = process.env.NEXT_PUBLIC_DEMO_MODE === "true";
+const USER_ID = "195145f9-d059-4a71-8722-fa61ecc911f3";
 
 const supabase: SupabaseClient = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -108,7 +109,6 @@ function MoreMenu({
 
 export default function Home() {
   const [tab, setTab] = useState<Tab>("today");
-  const [userId, setUserId] = useState<string | null>(null);
   const [todayTasks, setTodayTasks] = useState<Task[]>([]);
   const [completedTasks, setCompletedTasks] = useState<Task[]>([]);
   const [backlogTasks, setBacklogTasks] = useState<Task[]>([]);
@@ -119,30 +119,16 @@ export default function Home() {
 
   useEffect(() => {
     if (DEMO_MODE) {
-      setUserId("demo");
       setTodayTasks(DEMO_TODAY);
       setCompletedTasks(DEMO_COMPLETED);
       setBacklogTasks(DEMO_BACKLOG);
       setCapacity("moderate");
       setLoading(false);
-      return;
     }
-    async function init() {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (session?.user) {
-        setUserId(session.user.id);
-      } else {
-        const { data } = await supabase.auth.signInAnonymously();
-        if (data.user) setUserId(data.user.id);
-      }
-    }
-    init();
   }, []);
 
   const fetchTasks = useCallback(async () => {
-    if (!userId || DEMO_MODE) return;
+    if (DEMO_MODE) return;
     setLoading(true);
     const today = todayDate();
 
@@ -150,21 +136,21 @@ export default function Home() {
       supabase
         .from("tasks")
         .select("*")
-        .eq("user_id", userId)
+        .eq("user_id", USER_ID)
         .eq("approved_date", today)
         .eq("completed", false)
         .order("created_at", { ascending: true }),
       supabase
         .from("tasks")
         .select("*")
-        .eq("user_id", userId)
+        .eq("user_id", USER_ID)
         .eq("approved_date", today)
         .eq("completed", true)
         .order("created_at", { ascending: true }),
       supabase
         .from("tasks")
         .select("*")
-        .eq("user_id", userId)
+        .eq("user_id", USER_ID)
         .is("approved_date", null)
         .eq("completed", false)
         .order("created_at", { ascending: true }),
@@ -182,7 +168,7 @@ export default function Home() {
     setCompletedTasks(completedRes.data ?? []);
     setBacklogTasks(backlogRes.data ?? []);
     setLoading(false);
-  }, [userId]);
+  }, []);
 
   useEffect(() => {
     fetchTasks();
@@ -236,13 +222,13 @@ export default function Home() {
   async function addTask() {
     if (noop) return;
     const title = newTitle.trim();
-    if (!title || !userId) return;
+    if (!title) return;
     setNewTitle("");
     await supabase.from("tasks").insert({
       title,
       completed: false,
       approved_date: null,
-      user_id: userId,
+      user_id: USER_ID,
     });
     fetchTasks();
   }
@@ -254,14 +240,6 @@ export default function Home() {
       .from("Capacity")
       .update({ state, updated_at: new Date().toISOString() })
       .eq("id", 1);
-  }
-
-  if (!userId) {
-    return (
-      <div className="flex-1 flex items-center justify-center text-muted">
-        Loading…
-      </div>
-    );
   }
 
   return (
