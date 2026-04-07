@@ -97,26 +97,35 @@ export default function DemoPage() {
   return (
     <div className="flex flex-col items-center">
       {/* Section 1: Cortex Display */}
-      <section className="w-full bg-black px-6 py-16 flex flex-col items-center">
+      <section
+        className="w-full px-6 py-16 flex flex-col items-center"
+        style={{ backgroundColor: "#000000" }}
+      >
         <div className="w-full max-w-[640px]">
           <p
-            className="font-light tracking-tight text-white leading-none mb-1"
-            style={{ fontSize: "8vw" }}
+            className="tracking-tight leading-none mb-1"
+            style={{ fontSize: "8vw", fontWeight: 300, color: "#ffffff" }}
           >
             {formatTime(now)}
           </p>
-          <p className="text-[2.5vw] text-[#6b7280] mb-10">
+          <p className="mb-10" style={{ fontSize: "2.5vw", color: "#6b7280" }}>
             {formatDate(now)}
           </p>
 
           {/* Calendar event */}
-          <div className="pl-5 border-l-2 border-[#3b82f6]/40 mb-10">
-            <p className="text-[2.5vw] text-[#3b82f6]/80">
+          <div
+            className="pl-5 mb-10"
+            style={{ borderLeft: "2px solid rgba(59,130,246,0.4)" }}
+          >
+            <p style={{ fontSize: "1.8vw", color: "rgba(59,130,246,0.8)" }}>
               {formatTime(standupTime.current)}
-              <span className="text-white/50 mx-2">·</span>
+              <span style={{ color: "rgba(255,255,255,0.5)", margin: "0 8px" }}>·</span>
               Team Standup
             </p>
-            <p className="text-[1.8vw] text-[#3b82f6]/50 mt-1 font-medium">
+            <p
+              className="mt-1 font-medium"
+              style={{ fontSize: "1.8vw", color: "rgba(59,130,246,0.5)" }}
+            >
               {formatCountdown(standupTime.current, now)}
             </p>
           </div>
@@ -127,9 +136,12 @@ export default function DemoPage() {
               <button
                 key={opt}
                 onClick={() => setCapacity(opt)}
-                className={`text-sm capitalize ${
-                  capacity === opt ? "text-white" : "text-[#6b7280]"
-                }`}
+                className="capitalize border-0 bg-transparent p-0 cursor-pointer border-b-2"
+                style={{
+                  fontSize: "14px",
+                  color: capacity === opt ? "#ffffff" : "#6b7280",
+                  borderBottomColor: capacity === opt ? "rgba(255,255,255,0.4)" : "transparent",
+                }}
               >
                 {opt}
               </button>
@@ -138,18 +150,18 @@ export default function DemoPage() {
 
           {/* Tasks */}
           {fakeTasks.length > 0 ? (
-            <ul className="space-y-4">
+            <div className="flex flex-col gap-4">
               {fakeTasks.map((title) => (
-                <li
+                <p
                   key={title}
-                  className="text-[2.8vw] text-white/70"
+                  style={{ fontSize: "1.5vw", color: "rgba(255,255,255,0.7)", margin: 0 }}
                 >
                   {title}
-                </li>
+                </p>
               ))}
-            </ul>
+            </div>
           ) : (
-            <p className="text-[2.8vw] text-[#6b7280]">Rest</p>
+            <p style={{ fontSize: "1.5vw", color: "#6b7280", margin: 0 }}>Rest</p>
           )}
         </div>
       </section>
